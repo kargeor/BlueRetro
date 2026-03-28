@@ -166,6 +166,7 @@ static inline uint32_t get_port_led_pin(uint32_t index) {
 
 static void internal_flag_init(void) {
     hw_config.external_adapter = 0;
+    hw_config.reset_pin_polarity = 1;
     printf("# %s: Internal adapter\n", __FUNCTION__);
 }
 
@@ -477,7 +478,7 @@ static void sys_mgr_power_off(void) {
     bt_host_disconnect_all();
     if (sys_mgr_get_power()) {
         set_reset(0);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
         set_reset(1);
     }
 }
@@ -712,7 +713,7 @@ void sys_mgr_init(uint32_t package) {
     io_conf.pin_bit_mask = 1ULL << power_off_pin;
     gpio_config(&io_conf);
 
-    gpio_set_level(RESET_PIN, 1);
+    gpio_set_level(RESET_PIN, 0);
     if (hw_config.reset_pin_od) {
         io_conf.mode = GPIO_MODE_OUTPUT_OD;
     }
