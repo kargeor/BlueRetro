@@ -468,25 +468,18 @@ static void sys_mgr_inquiry_toggle(void) {
 }
 
 static void sys_mgr_power_on(void) {
-    set_power_on(1);
-    if (!hw_config.power_pin_is_hold) {
-        vTaskDelay(hw_config.power_pin_pulse_ms / portTICK_PERIOD_MS);
-        set_power_on(0);
+    if (!sys_mgr_get_power()) {
+        sys_mgr_reset();
     }
 }
 
 static void sys_mgr_power_off(void) {
     bt_host_disconnect_all();
-#ifdef CONFIG_BLUERETRO_HW2
-    if (hw_config.power_pin_is_hold) {
-        set_power_on(0);
+    if (sys_mgr_get_power()) {
+        set_reset(0);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        set_reset(1);
     }
-    else {
-        set_power_off(1);
-        vTaskDelay(hw_config.power_pin_pulse_ms / portTICK_PERIOD_MS);
-        set_power_off(0);
-    }
-#endif
 }
 
 static int32_t sys_mgr_get_power(void) {
