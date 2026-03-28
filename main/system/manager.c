@@ -165,26 +165,8 @@ static inline uint32_t get_port_led_pin(uint32_t index) {
 }
 
 static void internal_flag_init(void) {
-#ifdef CONFIG_BLUERETRO_HW2
-    if (hw_config.power_pin_polarity) {
-        if (!gpio_get_level(POWER_ON_PIN) && gpio_get_level(RESET_PIN)) {
-            hw_config.external_adapter = 1;
-        }
-    }
-    else {
-        if (gpio_get_level(POWER_ON_PIN) && gpio_get_level(RESET_PIN)) {
-            hw_config.external_adapter = 1;
-        }
-    }
-#else
-    hw_config.external_adapter = 1;
-#endif
-    if (hw_config.external_adapter) {
-        printf("# %s: External adapter\n", __FUNCTION__);
-    }
-    else {
-        printf("# %s: Internal adapter\n", __FUNCTION__);
-    }
+    hw_config.external_adapter = 0;
+    printf("# %s: Internal adapter\n", __FUNCTION__);
 }
 
 static void port_led_pulse(uint32_t pin) {
@@ -677,9 +659,9 @@ void sys_mgr_init(uint32_t package) {
     gpio_config(&io_conf);
 #endif
 
-    internal_flag_init();
-
     hw_config_patch();
+
+    internal_flag_init();
 
     err_led_cfg_update();
 
