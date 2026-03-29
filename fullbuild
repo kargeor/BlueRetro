@@ -1,0 +1,6 @@
+idf.py fullclean
+cp configs/hw2/playstation sdkconfig
+
+BR_HW="_hw2" BR_SYS="_psx" idf.py build
+
+

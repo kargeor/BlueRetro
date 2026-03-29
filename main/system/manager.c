@@ -33,11 +33,6 @@
 
 #define RESET_PIN 14
 
-#define POWER_ON_PIN 13
-#define POWER_OFF_PIN 16
-#define POWER_SENSE_PIN 39
-
-#define POWER_OFF_ALT_PIN 12
 
 #define SENSE_P1_PIN 35
 #define SENSE_P2_PIN 36
@@ -73,7 +68,6 @@ static uint8_t led_list[] = {
 };
 static uint8_t current_pulse_led = LED_P1_PIN;
 static uint8_t err_led_pin;
-static uint8_t power_off_pin = POWER_OFF_PIN;
 static uint8_t led_init_cnt = 1;
 static uint16_t port_state = 0;
 static RingbufHandle_t cmd_q_hdl = NULL;
@@ -113,24 +107,6 @@ static inline uint32_t sense_port_is_empty(uint32_t index) {
 #else
     return 1;
 #endif
-}
-
-static inline void set_power_on(uint32_t state) {
-    if (hw_config.power_pin_polarity) {
-        gpio_set_level(POWER_ON_PIN, !state);
-    }
-    else {
-        gpio_set_level(POWER_ON_PIN, state);
-    }
-}
-
-static inline void set_power_off(uint32_t state) {
-    if (hw_config.power_pin_polarity) {
-        gpio_set_level(power_off_pin, !state);
-    }
-    else {
-        gpio_set_level(power_off_pin, state);
-    }
 }
 
 static inline void set_reset(uint32_t state) {
@@ -491,7 +467,9 @@ static int32_t sys_mgr_get_power(void) {
         return 1;
     }
     else {
-        return gpio_get_level(POWER_SENSE_PIN);
+        uint32_t p1_empty = sense_port_is_empty(0);
+        uint32_t p2_empty = sense_port_is_empty(1);
+        return (!p1_empty || !p2_empty) ? 1 : 0;
     }
 #endif
 }
@@ -605,7 +583,6 @@ void sys_mgr_init(uint32_t package) {
 #ifdef CONFIG_BLUERETRO_HW2
             sense_list[0] = SENSE_P1_ALT_PIN;
             sense_list[1] = SENSE_P2_ALT_PIN;
-            power_off_pin = POWER_OFF_ALT_PIN;
 #endif
             break;
         case JAGUAR:
@@ -647,8 +624,6 @@ void sys_mgr_init(uint32_t package) {
 
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
 #ifdef CONFIG_BLUERETRO_HW2
-    io_conf.pin_bit_mask = 1ULL << POWER_ON_PIN;
-    gpio_config(&io_conf);
     io_conf.pin_bit_mask = 1ULL << RESET_PIN;
     gpio_config(&io_conf);
 #endif
@@ -669,8 +644,6 @@ void sys_mgr_init(uint32_t package) {
         io_conf.pin_bit_mask = 1ULL << sense_list[i];
         gpio_config(&io_conf);
     }
-    io_conf.pin_bit_mask = 1ULL << POWER_SENSE_PIN;
-    gpio_config(&io_conf);
 #endif
 
 #ifndef CONFIG_BLUERETRO_HW2
@@ -699,27 +672,8 @@ void sys_mgr_init(uint32_t package) {
     }
 
 #ifdef CONFIG_BLUERETRO_HW2
-    if (hw_config.power_pin_od) {
-        io_conf.mode = GPIO_MODE_OUTPUT_OD;
-    }
-    else {
-        io_conf.mode = GPIO_MODE_OUTPUT;
-    }
-    set_power_on(0);
-    io_conf.pin_bit_mask = 1ULL << POWER_ON_PIN;
-    gpio_config(&io_conf);
-
-    set_power_off(0);
-    io_conf.pin_bit_mask = 1ULL << power_off_pin;
-    gpio_config(&io_conf);
-
     gpio_set_level(RESET_PIN, 0);
-    if (hw_config.reset_pin_od) {
-        io_conf.mode = GPIO_MODE_OUTPUT_OD;
-    }
-    else {
-        io_conf.mode = GPIO_MODE_OUTPUT;
-    }
+    io_conf.mode = GPIO_MODE_OUTPUT;
     io_conf.pin_bit_mask = 1ULL << RESET_PIN;
     gpio_config(&io_conf);
 
