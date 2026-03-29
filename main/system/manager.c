@@ -460,18 +460,10 @@ static void sys_mgr_power_off(void) {
 }
 
 static int32_t sys_mgr_get_power(void) {
-#ifdef CONFIG_BLUERETRO_SYSTEM_UNIVERSAL
-    return 1;
-#else
-    if (hw_config.external_adapter) {
-        return 1;
-    }
-    else {
-        uint32_t p1_empty = sense_port_is_empty(0);
-        uint32_t p2_empty = sense_port_is_empty(1);
-        return (!p1_empty || !p2_empty) ? 1 : 0;
-    }
-#endif
+    uint32_t p1_level = gpio_get_level(SENSE_P1_PIN);
+    uint32_t p2_level = gpio_get_level(SENSE_P2_PIN);
+
+    return (p1_level || p2_level) ? 1 : 0;
 }
 
 static int32_t sys_mgr_get_boot_btn(void) {
