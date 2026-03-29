@@ -386,9 +386,9 @@ static void boot_btn_hdl(void) {
                     sys_mgr_power_on();
                     break;
                 default:
-                    set_reset(0);
+                    //set_reset(0);
                     sys_mgr_power_on();
-                    set_reset(1);
+                    //set_reset(1);
                     break;
             }
         }
@@ -431,7 +431,7 @@ static void sys_mgr_task(void *arg) {
 
 static void sys_mgr_reset(void) {
     set_reset(0);
-    vTaskDelay(hw_config.reset_pin_pulse_ms / portTICK_PERIOD_MS);
+    vTaskDelay(200 / portTICK_PERIOD_MS);
     set_reset(1);
 }
 
@@ -454,7 +454,7 @@ static void sys_mgr_power_off(void) {
     bt_host_disconnect_all();
     if (sys_mgr_get_power()) {
         set_reset(0);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        vTaskDelay(800 / portTICK_PERIOD_MS);
         set_reset(1);
     }
 }
